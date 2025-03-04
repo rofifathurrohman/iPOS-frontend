@@ -259,6 +259,21 @@ const Users = () => {
                     </select>
                   </div>
                 )}
+                {/* Role Selection for Staff Admin */}
+                {user.role === "staff_admin" && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Role</label>
+                    <select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg"
+                      required
+                    >
+                      <option value="kasir">Kasir</option>
+                      <option value="staff">Staff</option>
+                    </select>
+                  </div>
+                )}
                 {/* For Admin: Only show the "linked to" field if role is Kasir or Staff */}
                 {user.role === "admin" && (role === "kasir" || role === "staff") && (
                   <div className="mb-4">
