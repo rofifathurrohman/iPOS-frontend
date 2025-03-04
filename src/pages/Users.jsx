@@ -11,6 +11,7 @@ const Users = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");  // Add password state
   const [role, setRole] = useState("kasir");
+  const [linkedAdmin, setLinkedAdmin] = useState(null);  // Track which staff_admin the user will be linked to
   const [editingUserId, setEditingUserId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false); // Track modal visibility
   const [modalType, setModalType] = useState(""); // Add or Edit
@@ -23,55 +24,31 @@ const Users = () => {
     fetchUsers();
   }, [user, navigate]);
 
-  // const fetchUsers = async () => {
-  //   try {
-  //     const response = await axios.get("http://localhost:5000/users", {
-  //       headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-  //     });
-
-  //     // Filter users based on the role
-  //     const filteredUsers = filterUsersByRole(response.data);
-  //     setUsers(filteredUsers);
-  //   } catch (error) {
-  //     console.error("Error fetching users", error);
-  //   }
-  // };
-
+  // Fetch users based on their role and filter Staff Admin creation logic
   const fetchUsers = async () => {
     try {
       const response = await axios.get("http://localhost:5000/users", {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
-        params: user.role === "staff_admin" ? { created_by: user.id } : {}, // Filtering
+        params: user.role === "staff_admin" ? { created_by: user.id } : {}, // Filtering by created_by for Staff Admin
       });
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users", error);
     }
-  }  
-
-  const filterUsersByRole = (users) => {
-    // Staff Admin only sees "Staff" and "Kasir" users
-    if (user.role === "staff_admin") {
-      return users.filter((u) => u.role === "staff" || u.role === "kasir");
-    }
-
-    // Admin can see all users
-    if (user.role === "admin") {
-      return users;
-    }
-
-    // Staff can only see "Kasir" users
-    return users.filter((u) => u.role === "kasir");
   };
 
+  // Handle user creation by Admin and Staff Admin
   const handleAddUser = async (e) => {
     e.preventDefault();
-  
+
     if (!name.trim() || !email.trim() || !password.trim()) {
       alert("Semua field harus diisi!");
       return;
     }
-  
+
+    // Determine created_by based on who is adding the user
+    const createdBy = user.role === "staff_admin" ? user.id : linkedAdmin || null;  // Only Staff Admin auto links to themselves
+
     try {
       await axios.post(
         "http://localhost:5000/users",
@@ -80,7 +57,7 @@ const Users = () => {
           email: email.trim(),
           password: password.trim(),
           role,
-          created_by: user.role === "staff_admin" ? user.id : null,
+          created_by: createdBy,  // Automatically link to Staff Admin if created by Staff Admin
         },
         {
           headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
@@ -91,33 +68,32 @@ const Users = () => {
       setEmail("");
       setPassword("");
       setRole("kasir");
+      setLinkedAdmin(null);  // Reset the linked admin for future user creation
       setIsModalOpen(false);
     } catch (error) {
       console.error("Error adding user", error);
-      console.log("Backend response:", error.response?.data);
       alert(error.response?.data?.error || "Gagal menambahkan user.");
     }
-  };  
+  };
 
   const handleEditUser = async (e) => {
     e.preventDefault();
 
     const updateData = { name, email, role };
 
-    // Only include password if it's not empty
     if (password.trim() !== "") {
       updateData.password = password; // Update password only if provided
     }
 
     try {
-      const response = await axios.put(
+      await axios.put(
         `http://localhost:5000/users/${editingUserId}`,
         updateData,
         {
           headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
         }
       );
-      fetchUsers(); // Update user list after editing
+      fetchUsers();
       setName("");
       setEmail("");
       setPassword("");  // Reset password field
@@ -125,7 +101,7 @@ const Users = () => {
       setEditingUserId(null);
       setIsModalOpen(false); // Close the modal after successful edit
     } catch (error) {
-      console.error("Error editing user", error.response?.data || error.message);
+      console.error("Error editing user", error);
       alert("Failed to update user. Please try again.");
     }
   };
@@ -140,7 +116,7 @@ const Users = () => {
     } catch (error) {
       console.error("Error deleting user", error);
     }
-  };  
+  };
 
   const handleEditClick = (user) => {
     setEditingUserId(user.id);
@@ -151,7 +127,6 @@ const Users = () => {
     setModalType("edit");
     setIsModalOpen(true);
   };
-  
 
   const handleAddClick = () => {
     setModalType("add");
@@ -178,6 +153,9 @@ const Users = () => {
               <th className="border border-gray-300 px-4 py-2">Nama</th>
               <th className="border border-gray-300 px-4 py-2">Email</th>
               <th className="border border-gray-300 px-4 py-2">Role</th>
+              {user.role === "admin" && (
+                <th className="border border-gray-300 px-4 py-2">Ditautkan ke</th>
+              )}
               <th className="border border-gray-300 px-4 py-2">Aksi</th>
             </tr>
           </thead>
@@ -188,6 +166,15 @@ const Users = () => {
                 <td className="border border-gray-300 px-4 py-2">{u.name}</td>
                 <td className="border border-gray-300 px-4 py-2">{u.email}</td>
                 <td className="border border-gray-300 px-4 py-2">{u.role}</td>
+                {user.role === "admin" && (
+                  <td className="border border-gray-300 px-4 py-2">
+                    {u.created_by ? (
+                      users.find((staff) => staff.id === u.created_by)?.name
+                    ) : (
+                      "N/A"
+                    )}
+                  </td>
+                )}
                 <td className="border border-gray-300 px-4 py-2 flex gap-2">
                   <button
                     onClick={() => handleEditClick(u)}
@@ -255,20 +242,42 @@ const Users = () => {
                     className="w-full px-4 py-2 border rounded-lg"
                   />
                 </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Role</label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    required
-                  >
-                    <option value="kasir">Kasir</option>
-                    <option value="admin">Admin</option>
-                    <option value="staff">Staff</option>
-                    <option value="staff_admin">Staff Admin</option>
-                  </select>
-                </div>
+                {/* Role Selection for Admin */}
+                {user.role === "admin" && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Role</label>
+                    <select
+                      value={role}
+                      onChange={(e) => setRole(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg"
+                      required
+                    >
+                      <option value="kasir">Kasir</option>
+                      <option value="staff">Staff</option>
+                      <option value="staff_admin">Staff Admin</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                )}
+                {/* For Admin: Only show the "linked to" field if role is Kasir or Staff */}
+                {user.role === "admin" && (role === "kasir" || role === "staff") && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-2">Tautkan ke Staff Admin</label>
+                    <select
+                      value={linkedAdmin}
+                      onChange={(e) => setLinkedAdmin(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg"
+                      required
+                    >
+                      <option value={null}>Pilih Staff Admin</option>
+                      {users.filter((u) => u.role === "staff_admin").map((staffAdmin) => (
+                        <option key={staffAdmin.id} value={staffAdmin.id}>
+                          {staffAdmin.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <button
                     type="submit"
