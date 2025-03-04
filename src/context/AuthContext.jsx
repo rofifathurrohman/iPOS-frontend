@@ -5,41 +5,42 @@ import axios from "axios";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const storedUser = sessionStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      setUser({ token });
     }
   }, []);
 
   const login = async (email, password) => {
     try {
       const response = await axios.post("http://localhost:5000/users/login", {
-        email: email.trim(),  // Trim untuk menghindari spasi kosong
+        email: email.trim(),
         password: password.trim(),
-      }, {
-        headers: {
-          "Content-Type": "application/json",
-        },
       });
-  
-      localStorage.setItem("token", response.data.token);
-      setUser({ token: response.data.token });
+      sessionStorage.setItem("token", response.data.token);
+      sessionStorage.setItem("user", JSON.stringify(response.data.user));
+      setUser(response.data.user);
+      axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
       navigate("/");
     } catch (error) {
       console.error("Login failed", error.response ? error.response.data : error.message);
-      alert(error.response?.data?.message || "Login gagal, periksa email dan password!");
+      alert(error.response?.data?.error || "Login failed, check email and password.");
     }
   };
-  
 
   const logout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setUser(null);
+    delete axios.defaults.headers.common["Authorization"];
     navigate("/login");
   };
 
