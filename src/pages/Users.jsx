@@ -23,19 +23,31 @@ const Users = () => {
     fetchUsers();
   }, [user, navigate]);
 
+  // const fetchUsers = async () => {
+  //   try {
+  //     const response = await axios.get("http://localhost:5000/users", {
+  //       headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+  //     });
+
+  //     // Filter users based on the role
+  //     const filteredUsers = filterUsersByRole(response.data);
+  //     setUsers(filteredUsers);
+  //   } catch (error) {
+  //     console.error("Error fetching users", error);
+  //   }
+  // };
+
   const fetchUsers = async () => {
     try {
       const response = await axios.get("http://localhost:5000/users", {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
+        params: user.role === "staff_admin" ? { created_by: user.id } : {}, // Filtering
       });
-
-      // Filter users based on the role
-      const filteredUsers = filterUsersByRole(response.data);
-      setUsers(filteredUsers);
+      setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users", error);
     }
-  };
+  }  
 
   const filterUsersByRole = (users) => {
     // Staff Admin only sees "Staff" and "Kasir" users
@@ -54,24 +66,38 @@ const Users = () => {
 
   const handleAddUser = async (e) => {
     e.preventDefault();
+  
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      alert("Semua field harus diisi!");
+      return;
+    }
+  
     try {
       await axios.post(
         "http://localhost:5000/users",
-        { name, email, password, role },  // Include password here
+        {
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          role,
+          created_by: user.role === "staff_admin" ? user.id : null,
+        },
         {
           headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
         }
       );
-      fetchUsers(); // Update user list after adding
+      fetchUsers();
       setName("");
       setEmail("");
-      setPassword("");  // Reset password field
+      setPassword("");
       setRole("kasir");
-      setIsModalOpen(false); // Close the modal after successful add
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error adding user", error);
+      console.log("Backend response:", error.response?.data);
+      alert(error.response?.data?.error || "Gagal menambahkan user.");
     }
-  };
+  };  
 
   const handleEditUser = async (e) => {
     e.preventDefault();
@@ -109,21 +135,23 @@ const Users = () => {
       await axios.delete(`http://localhost:5000/users/${userId}`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
       });
-      fetchUsers(); // Update user list after deletion
-      setIsModalOpen(false); // Close modal after deleting user
+      fetchUsers();
+      setIsModalOpen(false); // ✅ Modal tertutup setelah delete
     } catch (error) {
       console.error("Error deleting user", error);
     }
-  };
+  };  
 
   const handleEditClick = (user) => {
     setEditingUserId(user.id);
     setName(user.name);
     setEmail(user.email);
     setRole(user.role);
+    setPassword("");
     setModalType("edit");
     setIsModalOpen(true);
   };
+  
 
   const handleAddClick = () => {
     setModalType("add");
