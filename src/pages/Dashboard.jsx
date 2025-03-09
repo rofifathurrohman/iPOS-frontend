@@ -25,17 +25,35 @@ const Dashboard = () => {
       <Sidebar role={role} />
       <div className="p-6 flex-1">
         <h1 className="text-2xl font-bold">Dashboard - {role.charAt(0).toUpperCase() + role.slice(1)}</h1>
-        {role === "admin" ? (
+
+        {/* Staff Admin Dashboard */}
+        {role === "staff_admin" && (
           <div className="mt-4 p-6 bg-white shadow-md rounded-lg">
-            <h2 className="text-xl font-bold">Admin Panel</h2>
-            <p className="text-gray-700">Sebagai Admin, Anda dapat mengelola pengguna, produk, transaksi, dan melihat laporan.</p>
+            <h2 className="text-xl font-bold">Staff Admin Panel</h2>
+            <p className="text-gray-700">Sebagai Staff Admin, Anda dapat mengelola pengguna, produk, transaksi, dan melihat laporan.</p>
             <ul className="mt-4 space-y-2">
               <li className="bg-blue-500 text-white p-2 rounded">➤ Manajemen Pengguna</li>
               <li className="bg-green-500 text-white p-2 rounded">➤ Manajemen Produk</li>
               <li className="bg-yellow-500 text-white p-2 rounded">➤ Laporan Keuangan</li>
             </ul>
           </div>
-        ) : (
+        )}
+
+        {/* Staff Dashboard */}
+        {role === "staff" && (
+          <div className="mt-4 p-6 bg-white shadow-md rounded-lg">
+            <h2 className="text-xl font-bold">Staff Panel</h2>
+            <p className="text-gray-700">Sebagai Staff, Anda dapat melihat data supplier, transaksi, dan melakukan pengelolaan transaksi.</p>
+            <ul className="mt-4 space-y-2">
+              <li className="bg-blue-500 text-white p-2 rounded">➤ Manajemen Supplier</li>
+              <li className="bg-green-500 text-white p-2 rounded">➤ Buat Transaksi</li>
+              <li className="bg-yellow-500 text-white p-2 rounded">➤ Cetak Struk</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Kasir Dashboard */}
+        {role === "kasir" && (
           <div className="mt-4 p-6 bg-white shadow-md rounded-lg">
             <h2 className="text-xl font-bold">Kasir Panel</h2>
             <p className="text-gray-700">Sebagai Kasir, Anda hanya dapat mengelola transaksi dan mencetak struk.</p>
@@ -45,6 +63,7 @@ const Dashboard = () => {
             </ul>
           </div>
         )}
+
         <button onClick={logout} className="mt-6 bg-red-500 text-white px-4 py-2 rounded">
           Logout
         </button>

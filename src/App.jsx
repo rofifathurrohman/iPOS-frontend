@@ -5,6 +5,9 @@ import Users from "./pages/Users";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Suppliers from "./pages/Suppliers";
+import CategoryManagement from "./pages/Category";
+import ProductManagement from "./pages/Products";
+import StockManagement from "./pages/Stock";
 
 function App() {
   return (
@@ -15,6 +18,9 @@ function App() {
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
           <Route path="/suppliers" element={<ProtectedRoute><Suppliers /></ProtectedRoute>} />
+          <Route path="/Stock" element={<ProtectedRoute><StockManagement /></ProtectedRoute>} />
+          <Route path="/products" element={<ProtectedRoute><ProductManagement /></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><CategoryManagement /></ProtectedRoute>} />
         </Routes>
       </AuthProvider>
     </Router>

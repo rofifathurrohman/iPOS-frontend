@@ -28,6 +28,33 @@ const Sidebar = ({ role }) => {
             </Link>
           </li>
         )}
+
+        {/* Only Staff Admin and Staff can see the "Manajemen Kategori" link */}
+        {(role === "staff_admin" || role === "staff") && (
+          <li className="mb-2">
+            <Link to="/stock" className="block p-2 hover:bg-gray-700">
+              Manajemen Stock
+            </Link>
+          </li>
+        )}
+
+        {/* Only Staff Admin and Staff can see the "Manajemen Kategori" link */}
+        {(role === "staff_admin" || role === "staff") && (
+          <li className="mb-2">
+            <Link to="/products" className="block p-2 hover:bg-gray-700">
+              Manajemen Produk
+            </Link>
+          </li>
+        )}
+
+        {/* Only Staff Admin and Staff can see the "Manajemen Kategori" link */}
+        {(role === "staff_admin" || role === "staff") && (
+          <li className="mb-2">
+            <Link to="/categories" className="block p-2 hover:bg-gray-700">
+              Manajemen Kategori Produk
+            </Link>
+          </li>
+        )}
       </ul>
     </div>
   );
